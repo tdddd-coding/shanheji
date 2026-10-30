@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#05080e">
+  <title>山河纪 · 中国历史三维时空图谱</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='5' fill='%23952b24'/%3E%3Ctext x='32' y='45' font-size='38' text-anchor='middle' fill='%23f6e5c9' font-family='serif'%3E山%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+    <div class="stage">
+      <canvas id="scene" aria-label="中国历史三维地形图"></canvas>
+      <div class="bg-aura"></div>
+      <div class="grain"></div>
+      <div class="vignette"></div>
+    </div>
+    <div class="left-scrim"></div>
+
+    <header class="topbar">
+      <div class="brand">
+        <div class="seal" aria-hidden="true"><span>山</span><span>河</span></div>
+        <div class="brand-text">
+          <h1>山河纪</h1>
+          <p>中国历史 · 三维时空图谱</p>
+        </div>
+      </div>
+      <div class="top-right">
+        <div class="layer-chips" id="layerChips" aria-label="图层控制">
+          <button class="chip is-on" data-layer="territory"><i></i>疆域</button>
+          <button class="chip is-on" data-layer="people"><i></i>人物</button>
+          <button class="chip is-on" data-layer="events"><i></i>事件</button>
+          <button class="chip is-on" data-layer="landmarks"><i></i>古迹</button>
+          <button class="chip is-on" data-layer="geo"><i></i>地理</button>
+          <button class="chip" data-layer="admin"><i></i>区划</button>
+        </div>
+        <div class="view-actions">
+          <button class="icon-btn" id="btnRotate" title="自动旋转" aria-label="自动旋转">
+            <svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.34-5.66M20 4v5h-5"/></svg>
+          </button>
+          <button class="icon-btn" id="btnReset" title="重置视角" aria-label="重置视角">
+            <svg viewBox="0 0 24 24"><path d="M4 10.5 12 4l8 6.5M6.5 9.5V20h11V9.5M10 20v-5h4v5"/></svg>
+          </button>
+          <button class="icon-btn" id="btnHelp" title="使用说明" aria-label="使用说明">?</button>
+        </div>
+      </div>
+    </header>
+
+    <aside class="era-rail" id="eraRail" aria-label="朝代章节"></aside>
+
+    <aside class="side-panel" id="sidePanel">
+      <div class="panel-glow"></div>
+      <button class="panel-close" id="panelClose" aria-label="收起侧栏">×</button>
+      <div class="panel-head">
+        <div class="eyebrow">CHAPTER <span id="chapterNo">01</span> / <span id="chapterTotal">09</span></div>
+        <div class="era-title-row">
+          <h2 id="eraTitle">秦</h2>
+          <span class="era-subtitle" id="eraSubtitle">秦朝</span>
+        </div>
+        <div class="era-years" id="eraYears">前221 — 前207</div>
+        <p class="era-summary" id="eraSummary"></p>
+        <div class="capital-row" id="capitalRow"></div>
+      </div>
+      <div class="panel-tabs" id="panelTabs" role="tablist">
+        <button class="tab is-active" data-tab="people" role="tab">人物 <em id="countPeople">4</em></button>
+        <button class="tab" data-tab="events" role="tab">事件 <em id="countEvents">6</em></button>
+        <button class="tab" data-tab="landmarks" role="tab">古迹 <em id="countLandmarks">22</em></button>
+      </div>
+      <div class="panel-list" id="panelList" role="tabpanel"></div>
+      <div class="panel-foot">
+        <span class="foot-dot"></span>
+        <span id="panelFootText">点击条目，飞越至历史现场</span>
+      </div>
+    </aside>
+    <button class="panel-toggle" id="panelToggle" aria-label="展开侧栏">章</button>
+
+    <div class="marker-layer" id="markerLayer"></div>
+    <div class="geo-layer" id="geoLayer"></div>
+    <div class="admin-layer" id="adminLayer"></div>
+
+    <section class="detail-card" id="detailCard" hidden aria-live="polite">
+      <button class="detail-close" id="detailClose" aria-label="关闭">×</button>
+      <div class="detail-head">
+        <div class="detail-stamp" id="detailStamp">人</div>
+        <div class="detail-title-wrap">
+          <div class="detail-kind" id="detailKind">人物志</div>
+          <h3 id="detailName">秦始皇</h3>
+          <div class="detail-meta" id="detailMeta"></div>
+        </div>
+        <span class="detail-art" id="detailArt" data-key=""></span>
+      </div>
+      <p class="detail-desc" id="detailDesc"></p>
+      <div class="detail-bottom">
+        <div class="detail-coord" id="detailCoord"></div>
+        <div class="detail-actions">
+          <button class="detail-wiki" id="detailWiki">百科</button>
+          <button class="detail-fly" id="detailFly">定位此处</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="compass" id="compass" aria-hidden="true">
+      <div class="compass-ring">
+        <i class="compass-needle" id="compassNeedle"></i>
+        <span class="compass-n">N</span>
+      </div>
+      <span class="compass-label">北</span>
+    </div>
+
+    <div class="hint" id="hint">
+      <span class="hint-line"></span>
+      拖动旋转 · 滚轮缩放 · 点击标记查看
+    </div>
+
+    <footer class="timeline" id="timeline">
+      <button class="play-btn" id="playBtn" aria-label="播放">
+        <svg class="icon-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        <svg class="icon-pause" viewBox="0 0 24 24"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>
+      </button>
+
+      <div class="timeline-main">
+        <div class="timeline-head">
+          <div class="now-era">
+            <span class="now-name" id="currentEra">秦</span>
+            <span class="now-years" id="currentYears">前221 — 前207</span>
+          </div>
+          <div class="map-note" id="mapNote">图示：秦朝疆域（示意）</div>
+          <div class="year-readout" id="yearText">公元前221年</div>
+        </div>
+        <div class="track" id="track" role="slider" aria-label="历史时间轴" tabindex="0">
+          <div class="track-glow"></div>
+          <div class="track-fill" id="trackFill"></div>
+          <div class="segments" id="segments"></div>
+          <div class="event-dots" id="eventDots"></div>
+          <div class="handle" id="handle"><span></span></div>
+        </div>
+        <div class="track-labels" id="trackLabels"></div>
+      </div>
+
+      <div class="timeline-nav">
+        <button class="nav-btn" id="btnPrev" aria-label="上一章">‹</button>
+        <button class="nav-btn" id="btnNext" aria-label="下一章">›</button>
+      </div>
+    </footer>
+
+    <div class="loading" id="loading">
+      <div class="loading-bg"></div>
+      <div class="load-seal"><span>山</span><span>河</span></div>
+      <div class="load-title">正在展开山河长卷</div>
+      <div class="load-sub">A JOURNEY THROUGH CHINESE HISTORY</div>
+      <div class="load-bar"><i id="loadBar"></i></div>
+      <div class="load-status" id="loadStatus">正在读取地理数据…</div>
+    </div>
+
+    <div class="wiki-modal" id="wikiModal" hidden>
+      <div class="wiki-mask" data-close-wiki></div>
+      <div class="wiki-card">
+        <button class="wiki-close" id="wikiClose" aria-label="关闭">×</button>
+        <div class="wiki-hero" id="wikiHero">
+          <img id="wikiHeroImg" alt="">
+          <div class="wiki-hero-empty" id="wikiHeroEmpty">迹</div>
+          <span class="wiki-badge" id="wikiImageCount">图集</span>
+          <button class="wiki-fs" id="wikiFullscreen" aria-label="全屏查看图片" title="全屏查看">
+            <svg viewBox="0 0 24 24"><path d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5"/></svg>
+          </button>
+          <div class="wiki-thumbs" id="wikiThumbs"></div>
+          <div class="wiki-credit" id="wikiCredit"></div>
+        </div>
+        <div class="wiki-content">
+          <div class="wiki-eyebrow" id="wikiKind"></div>
+          <div class="wiki-offline">本地百科 · 离线可读</div>
+          <h2 id="wikiName"></h2>
+          <div class="wiki-meta" id="wikiMeta"></div>
+          <p class="wiki-desc" id="wikiDesc"></p>
+          <div class="wiki-facts" id="wikiFacts"></div>
+          <div class="wiki-sections" id="wikiSections"></div>
+          <div class="wiki-related" id="wikiRelated"></div>
+          <div class="wiki-actions">
+            <button id="wikiFly">定位到地图</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="image-lightbox" id="imageLightbox" hidden>
+      <button class="lb-close" id="lbClose" aria-label="关闭全屏图片">×</button>
+      <button class="lb-nav lb-prev" id="lbPrev" aria-label="上一张">‹</button>
+      <img id="lbImg" alt="">
+      <button class="lb-nav lb-next" id="lbNext" aria-label="下一张">›</button>
+      <div class="lb-counter" id="lbCounter"></div>
+      <div class="lb-credit" id="lbCredit"></div>
+    </div>
+
+    <div class="modal" id="helpModal" hidden>
+      <div class="modal-mask" data-close-modal></div>
+      <div class="modal-card">
+        <button class="modal-close" id="modalClose" aria-label="关闭">×</button>
+        <div class="modal-eyebrow">山河纪 · 使用说明</div>
+        <h3>一卷山河，千年兴替</h3>
+        <p>以十六个历史时期为章节，时间轴按章节等宽显示；拖动底部时间轴或点击「播放」，看疆域推移、人物登场、大事发生。隋、五代十国等过渡阶段未单独展开。</p>
+        <p class="modal-note marker-legend">标记色：青绿 = 人物 · 琥珀 = 事件 · 天青 = 古迹 · 金色 = 都城。人物为时期代表，不严格按生卒年隐现；古迹按建成年代出现，标注始建年代。</p>
+        <p class="modal-note">点击人物、事件、古迹的图片或详情里的「百科」，可打开本地图片图集与离线百科；图片右上角可全屏查看，多图可左右切换。图片、文字均随课件保存。顶部「区划」图层按秦郡、汉州、唐道、宋路、元行省、明清省等行政中心示意标注。</p>
+        <div class="help-grid">
+          <div><b>旋转</b><span>按住左键拖动</span></div>
+          <div><b>缩放</b><span>滚轮 / 双指</span></div>
+          <div><b>平移</b><span>右键拖动 / 双指</span></div>
+          <div><b>定位</b><span>点击人物、事件、古迹标记</span></div>
+        </div>
+        <p class="modal-note">疆域轮廓依据 Historical Basemaps 简化重绘，海岸线来自 Natural Earth，高程来自 Mapzen / SRTM 公开瓦片；地形色彩为程序化生成，用于课堂教学示意，不作为历史地理考证依据。</p>
+        <p class="modal-note">快捷键：空格播放 / 暂停 · ← → 微调时间 · Esc 关闭</p>
+      </div>
+    </div>
+
+    <div class="error-panel" id="errorPanel" hidden>
+      <div class="error-card">
+        <div class="error-seal">!</div>
+        <h3>无法载入课件资源</h3>
+        <p id="errorText"></p>
+        <p class="error-code">请在项目目录运行：<code>python serve.py</code><br>然后访问 <code>http://127.0.0.1:8000</code></p>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+  </div>
+
+  <noscript><div class="noscript">请启用 JavaScript 以浏览本课件。</div></noscript>
+
+  <script src="vendor/three.min.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

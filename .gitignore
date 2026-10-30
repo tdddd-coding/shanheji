@@ -1,0 +1,17 @@
+# 抓图/调试临时产物
+out.html
+bing_test.html
+sogou_test.html
+test_murl.jpg
+
+# 部署产物
+deploy_*.tar.gz
+aifp-*.conf
+
+# Python
+__pycache__/
+*.pyc
+
+# 系统/编辑器
+.DS_Store
+Thumbs.db
